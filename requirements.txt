@@ -5,3 +5,4 @@ firecrawl
 python-dotenv
 requests
 pydantic
+langdetect
