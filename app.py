@@ -248,34 +248,42 @@ if prompt := st.chat_input("Ask about the website in any language..."):
                     # Process all valid URLs
                     all_data = []
                     for url in valid_urls:
-                        data = app.extract([url], extract_params)
-                        if isinstance(data, dict) and 'data' in data:
-                            all_data.append(data['data'])
-                        else:
-                            all_data.append(data)
+                        try:
+                            # Call extract with correct parameters - URLs must be in an array
+                            data = app.extract([url], extract_params)
+                            if isinstance(data, dict) and 'data' in data:
+                                all_data.append(data['data'])
+                            else:
+                                all_data.append(data)
+                        except Exception as e:
+                            st.warning(f"Error processing URL {url}: {str(e)}")
+                            continue
                     
-                    # Combine all data
-                    if len(all_data) == 1:
-                        response = str(all_data[0])
+                    if not all_data:
+                        st.error("No data could be extracted from any of the provided URLs.")
                     else:
-                        response = "\n\n".join([f"Results from {url}:\n{str(data)}" 
-                                              for url, data in zip(valid_urls, all_data)])
-                    
-                    # Always translate to selected language if not English
-                    if target_lang != 'en':
-                        # Add a verification step for translation
-                        st.info(f"Translating to {selected_language}...")
-                        response = translate_text(response, target_lang)
+                        # Combine all data
+                        if len(all_data) == 1:
+                            response = str(all_data[0])
+                        else:
+                            response = "\n\n".join([f"Results from {url}:\n{str(data)}" 
+                                                  for url, data in zip(valid_urls, all_data)])
                         
-                        # Verify the translation
-                        detected_lang = detect(response)
-                        if detected_lang != target_lang:
-                            # If translation is not in the correct language, try again with more strict prompt
-                            st.warning(f"Detected language ({detected_lang}) doesn't match target language ({target_lang}). Retrying translation...")
+                        # Always translate to selected language if not English
+                        if target_lang != 'en':
+                            # Add a verification step for translation
+                            st.info(f"Translating to {selected_language}...")
                             response = translate_text(response, target_lang)
-                    
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                            
+                            # Verify the translation
+                            detected_lang = detect(response)
+                            if detected_lang != target_lang:
+                                # If translation is not in the correct language, try again with more strict prompt
+                                st.warning(f"Detected language ({detected_lang}) doesn't match target language ({target_lang}). Retrying translation...")
+                                response = translate_text(response, target_lang)
+                        
+                        st.markdown(response)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
             
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
