@@ -1,8 +1,8 @@
 streamlit
 langchain
 langchain-openai
-firecrawl
-python-dotenv
+beautifulsoup4 
 requests
+python-dotenv
 pydantic
 langdetect
