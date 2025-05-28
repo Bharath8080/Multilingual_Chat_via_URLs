@@ -176,18 +176,18 @@ def stream_text(text: str, delay: float = 0.001) -> None:
 
 # Main content area
 st.markdown(
-    f'<h1><img src="https://framerusercontent.com/images/9vH8BcjXKRcC5OrSfkohhSyDgX0.png" width="60" style="vertical-align: middle;"/>Multilingual Chat via URLs <img src="https://static.vecteezy.com/system/resources/previews/036/004/783/non_2x/website-logo-searching-illustration-free-png.png" width="70" height="70" style="vertical-align: middle;"/></h1>',
+    f'<h1><img src="https://framerusercontent.com/images/9vH8BcjXKRcC5OrSfkohhSyDgX0.png" width="60" style="vertical-align: middle;"/>Multilingual Chat via URLs <img src="https://media.lordicon.com/icons/wired/outline/959-internet.gif" width="55" height="55" style="vertical-align: middle;"/></h1>',
     unsafe_allow_html=True
 )
 
 # Sidebar
 with st.sidebar:
-    st.header("Configuration")
+    st.markdown("### ⚙️ Configuration")
     
     # API Key sections
-    st.markdown("### API Keys")
-    st.markdown("**SUTRA API**")
-    st.markdown("Get your free API key from [SUTRA API](https://www.two.ai/sutra/api)")
+    st.markdown("### 🔑 API Keys")
+    st.markdown("#### 🤖 SUTRA API")
+    st.markdown("Get your free API key from [SUTRA API](https://www.two.ai/sutra/api) 🔗")
     sutra_api_key = st.text_input("Enter your Sutra API Key:", 
                                   value=st.session_state.get("sutra_api_key", ""),
                                   type="password",
@@ -196,15 +196,16 @@ with st.sidebar:
         st.session_state.sutra_api_key = sutra_api_key
     
     # Language selector
+    st.markdown("### 🌍 Language Settings")
     selected_language = st.selectbox("Select output language:", languages)
     
     # Website URLs input with plus button
-    st.markdown("### Website URLs")
+    st.markdown("### 🔗 Website URLs")
     for i, url in enumerate(st.session_state.urls):
         col1, col2 = st.columns([4, 1])
         with col1:
             st.session_state.urls[i] = st.text_input(
-                f"URL {i+1}",
+                f"🌐 URL {i+1}",
                 value=url,
                 placeholder="https://example.com",
                 key=f"url_{i}"
@@ -214,6 +215,26 @@ with st.sidebar:
                 st.button("➕", key=f"add_{i}", on_click=add_url)
             if len(st.session_state.urls) > 1:  # Show remove button if more than one URL
                 st.button("➖", key=f"remove_{i}", on_click=lambda i=i: remove_url(i))
+    
+    # Add a divider
+    st.markdown("---")
+    
+    # Add expandable tips section
+    with st.expander("💡 Click here for helpful tips"):
+        st.markdown("""
+        ### How to use this app:
+        
+        📌 **URL Management:**
+        - Use the ➕ button to add more URLs
+        - Use the ➖ button to remove URLs
+        - You can analyze multiple websites at once
+        
+        🌐 **Language Features:**
+        - Ask questions in any language
+        - Get responses in your preferred language
+        - Automatic language detection
+        
+        """)
 
 # Chat interface
 for message in st.session_state.messages:
