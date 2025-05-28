@@ -1,7 +1,8 @@
 import streamlit as st
 import os
 import gc
-from firecrawl import FirecrawlApp
+from bs4 import BeautifulSoup
+import requests
 from dotenv import load_dotenv
 import time
 import pandas as pd
@@ -13,6 +14,33 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 from langchain.callbacks.base import BaseCallbackHandler
 from langdetect import detect
+
+def scrape_website(url: str, prompt: str) -> str:
+    """Scrape website content using BeautifulSoup."""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style"]):
+            script.decompose()
+        
+        # Get text content
+        text = soup.get_text(separator='\n', strip=True)
+        
+        # Clean up text
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        
+        return text
+    except Exception as e:
+        raise Exception(f"Error scraping website: {str(e)}")
 
 # Page configuration
 st.set_page_config(
@@ -63,15 +91,8 @@ class StreamHandler(BaseCallbackHandler):
         self.container.markdown(self.text)
 
 load_dotenv()
-firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY")
 sutra_api_key = os.getenv("SUTRA_API_KEY")
 
-@st.cache_resource
-def load_app():
-    app = FirecrawlApp(api_key=firecrawl_api_key)
-    return app
-
-# Initialize the ChatOpenAI model
 @st.cache_resource
 def get_chat_model():
     if not st.session_state.get("sutra_api_key"):
@@ -174,15 +195,6 @@ with st.sidebar:
     if sutra_api_key:
         st.session_state.sutra_api_key = sutra_api_key
     
-    st.markdown("**Firecrawl API**")
-    st.markdown("Get your API key from [Firecrawl](https://firecrawl.dev/)")
-    firecrawl_api_key = st.text_input("Enter your Firecrawl API Key:", 
-                                     value=st.session_state.get("firecrawl_api_key", ""),
-                                     type="password",
-                                     label_visibility="collapsed")
-    if firecrawl_api_key:
-        st.session_state.firecrawl_api_key = firecrawl_api_key
-    
     # Language selector
     selected_language = st.selectbox("Select output language:", languages)
     
@@ -221,8 +233,6 @@ if prompt := st.chat_input("Ask about the website in any language..."):
             st.error("Please enter at least one website URL!")
         elif not st.session_state.get("sutra_api_key"):
             st.error("Please enter your SUTRA API key in the sidebar!")
-        elif not st.session_state.get("firecrawl_api_key"):
-            st.error("Please enter your Firecrawl API key in the sidebar!")
         else:
             try:
                 with st.spinner("Processing your request..."):
@@ -238,19 +248,25 @@ if prompt := st.chat_input("Ask about the website in any language..."):
                     else:
                         translated_prompt = prompt
                     
-                    # Extract data from website
-                    app = load_app()
-                    
                     # Process all valid URLs
                     all_data = []
                     for url in valid_urls:
                         try:
-                            # Call extract with the URL as an array and prompt as a parameter
-                            data = app.extract(urls=[url], prompt=translated_prompt)
-                            if isinstance(data, dict) and 'data' in data:
-                                all_data.append(data['data'])
-                            else:
-                                all_data.append(data)
+                            # Scrape website content
+                            content = scrape_website(url, translated_prompt)
+                            
+                            # Use the chat model to analyze the content based on the prompt
+                            chat = get_chat_model()
+                            analysis_prompt = f"""Based on the following website content, answer this question: {translated_prompt}
+                            
+                            Website content:
+                            {content}
+                            
+                            Please provide a clear and concise answer."""
+                            
+                            response = chat.invoke([HumanMessage(content=analysis_prompt)])
+                            all_data.append(response.content)
+                            
                         except Exception as e:
                             st.warning(f"Error processing URL {url}: {str(e)}")
                             continue
@@ -283,4 +299,4 @@ if prompt := st.chat_input("Ask about the website in any language..."):
             
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
-                st.info("Please check your API keys and try again.")
+                st.info("Please check your API key and try again.")
