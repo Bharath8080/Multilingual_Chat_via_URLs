@@ -245,8 +245,11 @@ if prompt := st.chat_input("Ask about the website in any language..."):
                     all_data = []
                     for url in valid_urls:
                         try:
-                            # Call extract with the URL and parameters combined
-                            data = app.extract(url, prompt=translated_prompt)
+                            # Call extract with a single dictionary parameter containing both URL and prompt
+                            data = app.extract({
+                                'url': url,
+                                'prompt': translated_prompt
+                            })
                             if isinstance(data, dict) and 'data' in data:
                                 all_data.append(data['data'])
                             else:
