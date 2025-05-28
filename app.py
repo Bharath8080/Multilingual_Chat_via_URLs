@@ -176,7 +176,7 @@ def stream_text(text: str, delay: float = 0.001) -> None:
 
 # Main content area
 st.markdown(
-    f'<h1><img src="https://framerusercontent.com/images/9vH8BcjXKRcC5OrSfkohhSyDgX0.png" width="60" style="vertical-align: middle;"/>Multilingual Chat via URLs <img src="https://media.lordicon.com/icons/wired/outline/959-internet.gif" width="55" height="55" style="vertical-align: middle;"/></h1>',
+    f'<h1><img src="https://framerusercontent.com/images/9vH8BcjXKRcC5OrSfkohhSyDgX0.png" width="60" style="vertical-align: middle;"/>Multilingual Chat via URLs <img src="https://i.gifer.com/3WyW.gif" width="80" height="80" style="vertical-align: middle;"/></h1>',
     unsafe_allow_html=True
 )
 
